@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muscle Quest</title>
+<!-- React + ReactDOM via CDN -->
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<style>
+  body { margin:0; font-family:'Segoe UI', sans-serif; background:#0f172a; color:#e2e8f0; }
+  h1 { text-align:center; color:#38bdf8; }
+  nav { display:flex; justify-content:space-around; background:#1e293b; padding:10px; }
+  nav button { background:none; border:none; color:#e2e8f0; font-size:16px; cursor:pointer; }
+  .tab { padding:20px; }
+  input { padding:5px; margin-right:5px; }
+  ul { padding-left:20px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+function BodyView() {
+  const [gender, setGender] = React.useState('male');
+  return (
+    <div>
+      <h2>Body View</h2>
+      <select value={gender} onChange={e=>setGender(e.target.value)}>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+      <p>{gender==='male' ? 'Male body muscles go here' : 'Female body muscles go here'}</p>
+    </div>
+  );
+}
+
+function Workouts() {
+  const workoutList = [
+    { name:'Push-Up', muscles:'Chest, Triceps', description:'Push body up from floor.' },
+    { name:'Squat', muscles:'Legs, Glutes', description:'Bend knees to lower body.' },
+    { name:'Plank', muscles:'Core', description:'Hold body straight, supported by arms.' },
+  ];
+  return (
+    <div>
+      <h2>Workouts</h2>
+      {workoutList.map((w,i)=><div key={i}>
+        <h3>{w.name}</h3>
+        <p><strong>Muscles:</strong> {w.muscles}</p>
+        <p>{w.description}</p>
+      </div>)}
+    </div>
+  );
+}
+
+function RecordWorkout() {
+  const [workouts,setWorkouts] = React.useState(()=>JSON.parse(localStorage.getItem('mqWorkouts')||'[]'));
+  const [input,setInput] = React.useState('');
+  const addWorkout=()=>{ if(input){ const newW=[...workouts,input]; setWorkouts(newW); localStorage.setItem('mqWorkouts',JSON.stringify(newW)); setInput(''); } };
+  return (
+    <div>
+      <h2>Record Workout</h2>
+      <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Workout name"/>
+      <button onClick={addWorkout}>Add</button>
+      <ul>{workouts.map((w,i)=><li key={i}>{w}</li>)}</ul>
+    </div>
+  );
+}
+
+function Coach() {
+  const [question,setQuestion]=React.useState('');
+  const [answer,setAnswer]=React.useState('');
+  const ask=()=>{ if(question){ setAnswer('This is a placeholder answer from your AI coach.'); setQuestion(''); } };
+  return (
+    <div>
+      <h2>AI Coach</h2>
+      <input value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Ask a question"/>
+      <button onClick={ask}>Ask</button>
+      {answer && <p><strong>{answer}</strong></p>}
+    </div>
+  );
+}
+
+function Profile() {
+  const [height,setHeight]=React.useState(localStorage.getItem('mqHeight')||'');
+  const [weight,setWeight]=React.useState(localStorage.getItem('mqWeight')||'');
+  const save=()=>{ localStorage.setItem('mqHeight',height); localStorage.setItem('mqWeight',weight); };
+  return (
+    <div>
+      <h2>Profile</h2>
+      <input value={height} onChange={e=>setHeight(e.target.value)} placeholder="Height"/>
+      <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Weight"/>
+      <button onClick={save}>Save</button>
+      <p>Height: {height} | Weight: {weight}</p>
+    </div>
+  );
+}
+
+function App() {
+  const [tab,setTab]=React.useState('Body');
+  return (
+    <div>
+      <h1>Muscle Quest</h1>
+      <nav>
+        {['Body','Workouts','Record','Coach','Profile'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </nav>
+      <div className="tab">
+        {tab==='Body' && <BodyView />}
+        {tab==='Workouts' && <Workouts />}
+        {tab==='Record' && <RecordWorkout />}
+        {tab==='Coach' && <Coach />}
+        {tab==='Profile' && <Profile />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
