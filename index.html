@@ -50,14 +50,11 @@ const defaultWorkouts = [
   { name:'Glute Bridge', muscles:['Glutes','Core'] }
 ];
 
-// BodyView component with male/female SVG
+// BodyView component
 function BodyView({trainedMuscles}) {
   const [gender,setGender] = React.useState(localStorage.getItem('mqGender')||'male');
   React.useEffect(()=>localStorage.setItem('mqGender', gender), [gender]);
   
-  const allMuscles = ['Chest','Triceps','Legs','Glutes','Core','Biceps','Shoulders','Back'];
-
-  // Simple example of SVG muscle shapes
   return (
     <div>
       <h2>Body View</h2>
@@ -158,4 +155,72 @@ function RecordWorkout({workouts, onAddSession}) {
       <ul>
         {selectedExercises.map((ex,i)=><li key={i}>{ex.name} — {ex.reps} reps x {ex.sets} sets ({ex.duration} sec)</li>)}
       </ul>
-      <button onClick={finishWorkout}>Finish Workout</button
+      <button onClick={finishWorkout}>Finish Workout</button>
+      <h3>Previous Sessions</h3>
+      <ul>
+        {records.map((s,i)=><li key={i}>{s.date}: {s.exercises.map(e=>e.name).join(', ')}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+// Profile component with BMI
+function Profile() {
+  const [height,setHeight] = React.useState(localStorage.getItem('mqHeight')||'');
+  const [weight,setWeight] = React.useState(localStorage.getItem('mqWeight')||'');
+  const save = ()=>{
+    localStorage.setItem('mqHeight',height);
+    localStorage.setItem('mqWeight',weight);
+  }
+  const bmi = height && weight ? (weight / ((height/100)**2)).toFixed(1) : '';
+  return (
+    <div>
+      <h2>Profile</h2>
+      <input value={height} onChange={e=>setHeight(e.target.value)} placeholder="Height (cm)"/>
+      <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Weight (kg)"/>
+      <button onClick={save}>Save</button>
+      <p>Height: {height} cm | Weight: {weight} kg | BMI: {bmi}</p>
+    </div>
+  );
+}
+
+// Main App component
+function App() {
+  const [tab,setTab] = React.useState('Body');
+  const [workouts,setWorkouts] = React.useState(() => {
+    return JSON.parse(localStorage.getItem('mqWorkouts') || '[]').length
+      ? JSON.parse(localStorage.getItem('mqWorkouts'))
+      : defaultWorkouts;
+  });
+  const [sessions,setSessions] = React.useState(() => JSON.parse(localStorage.getItem('mqSessions') || '[]'));
+  
+  const trainedMuscles = Array.from(new Set(sessions.flatMap(s => s.exercises.flatMap(e => e.muscles))));
+
+  const addCustomWorkout = (w) => {
+    const updated = [...workouts, w];
+    setWorkouts(updated);
+    localStorage.setItem('mqWorkouts', JSON.stringify(updated));
+  }
+
+  return (
+    <div>
+      <h1>Muscle Quest</h1>
+      <nav>
+        {['Body','Workouts','Record','Profile'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </nav>
+      <div className="tab">
+        {tab==='Body' && <BodyView trainedMuscles={trainedMuscles}/>}
+        {tab==='Workouts' && <Workouts workouts={workouts} addCustom={addCustomWorkout}/>}
+        {tab==='Record' && <RecordWorkout workouts={workouts} onAddSession={setSessions}/>}
+        {tab==='Profile' && <Profile />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
