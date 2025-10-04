@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Muscle Quest</title>
-<!-- React + ReactDOM via CDN -->
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
 <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -14,8 +13,11 @@
   nav { display:flex; justify-content:space-around; background:#1e293b; padding:10px; }
   nav button { background:none; border:none; color:#e2e8f0; font-size:16px; cursor:pointer; }
   .tab { padding:20px; }
-  input { padding:5px; margin-right:5px; }
+  select, input, button { padding:5px; margin:5px; }
   ul { padding-left:20px; }
+  .body-diagram { display:flex; justify-content:center; margin:10px 0; }
+  .muscle { width: 30px; height: 30px; margin:2px; display:inline-block; background:#334155; border-radius:4px; }
+  .trained { background:#22c55e; }
 </style>
 </head>
 <body>
@@ -23,8 +25,17 @@
 
 <script type="text/babel">
 
-function BodyView() {
-  const [gender, setGender] = React.useState('male');
+const workoutsLibrary = [
+  { name:'Push-Up', muscles:['Chest','Triceps'] },
+  { name:'Squat', muscles:['Legs','Glutes'] },
+  { name:'Plank', muscles:['Core'] },
+  { name:'Bicep Curl', muscles:['Biceps'] },
+  { name:'Shoulder Press', muscles:['Shoulders'] }
+];
+
+function BodyView({trainedMuscles}) {
+  const [gender,setGender] = React.useState('male');
+  const allMuscles = ['Chest','Triceps','Legs','Glutes','Core','Biceps','Shoulders'];
   return (
     <div>
       <h2>Body View</h2>
@@ -32,47 +43,66 @@ function BodyView() {
         <option value="male">Male</option>
         <option value="female">Female</option>
       </select>
-      <p>{gender==='male' ? 'Male body muscles go here' : 'Female body muscles go here'}</p>
+      <div className="body-diagram">
+        {allMuscles.map(muscle=>(
+          <div key={muscle} className={"muscle "+(trainedMuscles.includes(muscle)?'trained':'')} title={muscle}></div>
+        ))}
+      </div>
+      <p>Green squares show muscles you’ve trained.</p>
     </div>
   );
 }
 
-function Workouts() {
-  const workoutList = [
-    { name:'Push-Up', muscles:'Chest, Triceps', description:'Push body up from floor.' },
-    { name:'Squat', muscles:'Legs, Glutes', description:'Bend knees to lower body.' },
-    { name:'Plank', muscles:'Core', description:'Hold body straight, supported by arms.' },
-  ];
+function Workouts({addWorkout}) {
   return (
     <div>
       <h2>Workouts</h2>
-      {workoutList.map((w,i)=><div key={i}>
-        <h3>{w.name}</h3>
-        <p><strong>Muscles:</strong> {w.muscles}</p>
-        <p>{w.description}</p>
-      </div>)}
+      {workoutsLibrary.map((w,i)=>(
+        <div key={i}>
+          <h3>{w.name}</h3>
+          <p><strong>Muscles:</strong> {w.muscles.join(', ')}</p>
+        </div>
+      ))}
     </div>
   );
 }
 
-function RecordWorkout() {
-  const [workouts,setWorkouts] = React.useState(()=>JSON.parse(localStorage.getItem('mqWorkouts')||'[]'));
-  const [input,setInput] = React.useState('');
-  const addWorkout=()=>{ if(input){ const newW=[...workouts,input]; setWorkouts(newW); localStorage.setItem('mqWorkouts',JSON.stringify(newW)); setInput(''); } };
+function RecordWorkout({onAdd}) {
+  const [selectedWorkout,setSelectedWorkout] = React.useState(workoutsLibrary[0].name);
+  const [records,setRecords] = React.useState(()=>JSON.parse(localStorage.getItem('mqRecords')||'[]'));
+
+  const add = ()=>{
+    const workout = workoutsLibrary.find(w=>w.name===selectedWorkout);
+    const newRecord = {name:workout.name, muscles: workout.muscles, date: new Date().toLocaleDateString()};
+    const updated = [...records,newRecord];
+    setRecords(updated);
+    localStorage.setItem('mqRecords',JSON.stringify(updated));
+    onAdd(updated);
+  }
+
   return (
     <div>
       <h2>Record Workout</h2>
-      <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Workout name"/>
-      <button onClick={addWorkout}>Add</button>
-      <ul>{workouts.map((w,i)=><li key={i}>{w}</li>)}</ul>
+      <select value={selectedWorkout} onChange={e=>setSelectedWorkout(e.target.value)}>
+        {workoutsLibrary.map(w=><option key={w.name} value={w.name}>{w.name}</option>)}
+      </select>
+      <button onClick={add}>Add Workout</button>
+      <ul>
+        {records.map((r,i)=><li key={i}>{r.date}: {r.name} ({r.muscles.join(', ')})</li>)}
+      </ul>
     </div>
   );
 }
 
 function Coach() {
-  const [question,setQuestion]=React.useState('');
-  const [answer,setAnswer]=React.useState('');
-  const ask=()=>{ if(question){ setAnswer('This is a placeholder answer from your AI coach.'); setQuestion(''); } };
+  const [question,setQuestion] = React.useState('');
+  const [answer,setAnswer] = React.useState('');
+  const ask = ()=>{
+    if(question){
+      setAnswer("This is a placeholder answer from your AI coach.");
+      setQuestion('');
+    }
+  }
   return (
     <div>
       <h2>AI Coach</h2>
@@ -84,9 +114,12 @@ function Coach() {
 }
 
 function Profile() {
-  const [height,setHeight]=React.useState(localStorage.getItem('mqHeight')||'');
-  const [weight,setWeight]=React.useState(localStorage.getItem('mqWeight')||'');
-  const save=()=>{ localStorage.setItem('mqHeight',height); localStorage.setItem('mqWeight',weight); };
+  const [height,setHeight] = React.useState(localStorage.getItem('mqHeight')||'');
+  const [weight,setWeight] = React.useState(localStorage.getItem('mqWeight')||'');
+  const save = ()=>{
+    localStorage.setItem('mqHeight',height);
+    localStorage.setItem('mqWeight',weight);
+  }
   return (
     <div>
       <h2>Profile</h2>
@@ -99,7 +132,10 @@ function Profile() {
 }
 
 function App() {
-  const [tab,setTab]=React.useState('Body');
+  const [tab,setTab] = React.useState('Body');
+  const [records,setRecords] = React.useState(()=>JSON.parse(localStorage.getItem('mqRecords')||'[]'));
+  const trainedMuscles = Array.from(new Set(records.flatMap(r=>r.muscles)));
+
   return (
     <div>
       <h1>Muscle Quest</h1>
@@ -109,9 +145,9 @@ function App() {
         ))}
       </nav>
       <div className="tab">
-        {tab==='Body' && <BodyView />}
+        {tab==='Body' && <BodyView trainedMuscles={trainedMuscles}/>}
         {tab==='Workouts' && <Workouts />}
-        {tab==='Record' && <RecordWorkout />}
+        {tab==='Record' && <RecordWorkout onAdd={setRecords}/>}
         {tab==='Coach' && <Coach />}
         {tab==='Profile' && <Profile />}
       </div>
