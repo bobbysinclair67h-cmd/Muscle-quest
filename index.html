@@ -26,7 +26,6 @@
 
 <script type="text/babel">
 
-// Predefined workout library
 const defaultWorkouts = [
   { name:'Push-Up', muscles:['Chest','Triceps'] },
   { name:'Squat', muscles:['Legs','Glutes'] },
@@ -50,11 +49,10 @@ const defaultWorkouts = [
   { name:'Glute Bridge', muscles:['Glutes','Core'] }
 ];
 
-// BodyView component
 function BodyView({trainedMuscles}) {
   const [gender,setGender] = React.useState(localStorage.getItem('mqGender')||'male');
   React.useEffect(()=>localStorage.setItem('mqGender', gender), [gender]);
-  
+
   return (
     <div>
       <h2>Body View</h2>
@@ -64,25 +62,25 @@ function BodyView({trainedMuscles}) {
       </select>
       <div className="body-container">
         <svg viewBox="0 0 100 200">
+          {/* Shoulders */}
+          <rect x="30" y="10" width="40" height="10" className={"muscle "+(trainedMuscles.includes('Shoulders')?'trained':'')} title="Shoulders"/>
+          {/* Biceps */}
+          <rect x="20" y="10" width="10" height="20" className={"muscle "+(trainedMuscles.includes('Biceps')?'trained':'')} title="Biceps"/>
+          <rect x="70" y="10" width="10" height="20" className={"muscle "+(trainedMuscles.includes('Biceps')?'trained':'')} title="Biceps"/>
           {/* Chest */}
           <rect x="35" y="40" width="30" height="20" className={"muscle "+(trainedMuscles.includes('Chest')?'trained':'')} title="Chest"/>
           {/* Triceps */}
           <rect x="20" y="40" width="10" height="30" className={"muscle "+(trainedMuscles.includes('Triceps')?'trained':'')} title="Triceps"/>
           <rect x="70" y="40" width="10" height="30" className={"muscle "+(trainedMuscles.includes('Triceps')?'trained':'')} title="Triceps"/>
-          {/* Biceps */}
-          <rect x="20" y="10" width="10" height="20" className={"muscle "+(trainedMuscles.includes('Biceps')?'trained':'')} title="Biceps"/>
-          <rect x="70" y="10" width="10" height="20" className={"muscle "+(trainedMuscles.includes('Biceps')?'trained':'')} title="Biceps"/>
-          {/* Shoulders */}
-          <rect x="30" y="10" width="40" height="10" className={"muscle "+(trainedMuscles.includes('Shoulders')?'trained':'')} title="Shoulders"/>
-          {/* Core */}
-          <rect x="35" y="60" width="30" height="40" className={"muscle "+(trainedMuscles.includes('Core')?'trained':'')} title="Core"/>
-          {/* Legs */}
-          <rect x="35" y="100" width="10" height="40" className={"muscle "+(trainedMuscles.includes('Legs')?'trained':'')} title="Legs"/>
-          <rect x="55" y="100" width="10" height="40" className={"muscle "+(trainedMuscles.includes('Legs')?'trained':'')} title="Legs"/>
-          {/* Glutes */}
-          <rect x="40" y="80" width="20" height="20" className={"muscle "+(trainedMuscles.includes('Glutes')?'trained':'')} title="Glutes"/>
           {/* Back */}
-          <rect x="35" y="40" width="30" height="40" className={"muscle "+(trainedMuscles.includes('Back')?'trained':'')} title="Back"/>
+          <rect x="35" y="65" width="30" height="40" className={"muscle "+(trainedMuscles.includes('Back')?'trained':'')} title="Back"/>
+          {/* Core */}
+          <rect x="35" y="100" width="30" height="40" className={"muscle "+(trainedMuscles.includes('Core')?'trained':'')} title="Core"/>
+          {/* Glutes */}
+          <rect x="40" y="140" width="20" height="20" className={"muscle "+(trainedMuscles.includes('Glutes')?'trained':'')} title="Glutes"/>
+          {/* Legs */}
+          <rect x="35" y="160" width="10" height="40" className={"muscle "+(trainedMuscles.includes('Legs')?'trained':'')} title="Legs"/>
+          <rect x="55" y="160" width="10" height="40" className={"muscle "+(trainedMuscles.includes('Legs')?'trained':'')} title="Legs"/>
         </svg>
       </div>
       <p>Green muscles are trained.</p>
@@ -90,7 +88,6 @@ function BodyView({trainedMuscles}) {
   );
 }
 
-// Workouts component
 function Workouts({workouts, addCustom}) {
   const [newName,setNewName] = React.useState('');
   const [newMuscles,setNewMuscles] = React.useState('');
@@ -116,16 +113,16 @@ function Workouts({workouts, addCustom}) {
   );
 }
 
-// RecordWorkout component
 function RecordWorkout({workouts, onAddSession}) {
   const [selectedExercises,setSelectedExercises] = React.useState([]);
   const [currentExercise,setCurrentExercise] = React.useState(workouts[0]?.name || '');
   const [reps,setReps] = React.useState(10);
   const [sets,setSets] = React.useState(3);
-  const [duration,setDuration] = React.useState(0); // optional seconds
+  const [duration,setDuration] = React.useState(0);
   const [records,setRecords] = React.useState(()=>JSON.parse(localStorage.getItem('mqSessions')||'[]'));
 
   const addExercise = ()=>{
+    if(!currentExercise) return;
     const workout = workouts.find(w=>w.name===currentExercise);
     if(workout) setSelectedExercises([...selectedExercises,{...workout,reps,sets,duration}]);
   }
@@ -164,63 +161,18 @@ function RecordWorkout({workouts, onAddSession}) {
   );
 }
 
-// Profile component with BMI
 function Profile() {
   const [height,setHeight] = React.useState(localStorage.getItem('mqHeight')||'');
   const [weight,setWeight] = React.useState(localStorage.getItem('mqWeight')||'');
   const save = ()=>{
-    localStorage.setItem('mqHeight',height);
-    localStorage.setItem('mqWeight',weight);
+    localStorage.setItem('mqHeight', height);
+    localStorage.setItem('mqWeight', weight);
   }
-  const bmi = height && weight ? (weight / ((height/100)**2)).toFixed(1) : '';
+  const bmi = (parseFloat(height) && parseFloat(weight)) ? (parseFloat(weight)/((parseFloat(height)/100)**2)).toFixed(1) : '';
   return (
     <div>
       <h2>Profile</h2>
       <input value={height} onChange={e=>setHeight(e.target.value)} placeholder="Height (cm)"/>
       <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Weight (kg)"/>
       <button onClick={save}>Save</button>
-      <p>Height: {height} cm | Weight: {weight} kg | BMI: {bmi}</p>
-    </div>
-  );
-}
-
-// Main App component
-function App() {
-  const [tab,setTab] = React.useState('Body');
-  const [workouts,setWorkouts] = React.useState(() => {
-    return JSON.parse(localStorage.getItem('mqWorkouts') || '[]').length
-      ? JSON.parse(localStorage.getItem('mqWorkouts'))
-      : defaultWorkouts;
-  });
-  const [sessions,setSessions] = React.useState(() => JSON.parse(localStorage.getItem('mqSessions') || '[]'));
-  
-  const trainedMuscles = Array.from(new Set(sessions.flatMap(s => s.exercises.flatMap(e => e.muscles))));
-
-  const addCustomWorkout = (w) => {
-    const updated = [...workouts, w];
-    setWorkouts(updated);
-    localStorage.setItem('mqWorkouts', JSON.stringify(updated));
-  }
-
-  return (
-    <div>
-      <h1>Muscle Quest</h1>
-      <nav>
-        {['Body','Workouts','Record','Profile'].map(t=>(
-          <button key={t} onClick={()=>setTab(t)}>{t}</button>
-        ))}
-      </nav>
-      <div className="tab">
-        {tab==='Body' && <BodyView trainedMuscles={trainedMuscles}/>}
-        {tab==='Workouts' && <Workouts workouts={workouts} addCustom={addCustomWorkout}/>}
-        {tab==='Record' && <RecordWorkout workouts={workouts} onAddSession={setSessions}/>}
-        {tab==='Profile' && <Profile />}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
-</body>
-</html>
+      <
